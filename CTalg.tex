@@ -1,0 +1,134 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[russian]{babel}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+\title{FFT with Arbitrary Radix: Step-by-Step Explanation}
+\author{DeepSeek Chat}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document provides a detailed explanation of the Fast Fourier Transform (FFT) with an arbitrary radix, focusing on the Decimation in Frequency (DIF) approach. The discussion covers the mathematical foundations, step-by-step computations, and the relationship between intermediate and final results. All Russian text from the original conversation has been translated into English.
+
+\section{Basic Concepts}
+\subsection{Butterfly Operation}
+The \textbf{butterfly operation} is the fundamental building block of the FFT algorithm. It combines two complex numbers using twiddle factors (rotational phase factors). For a radix-2 FFT, the butterfly operation is defined as:
+\[
+\begin{cases}
+X = A + W \cdot B, \\
+Y = A - W \cdot B,
+\end{cases}
+\]
+where \( W \) is the twiddle factor.
+
+\subsection{DIT and DIF}
+Two common FFT algorithms are:
+\begin{itemize}
+    \item \textbf{DIT (Decimation in Time)}: The input sequence is divided into smaller subsequences based on time indices.
+    \item \textbf{DIF (Decimation in Frequency)}: The output sequence is divided into smaller subsequences based on frequency indices.
+\end{itemize}
+
+\section{Generalization to Arbitrary Radix}
+For an arbitrary radix \( r \), the FFT algorithm generalizes to handle sequences of length \( N = r^m \). The butterfly operation is extended to \( r \) inputs and outputs:
+\[
+Y_k = \sum_{j=0}^{r-1} x_j \cdot W_r^{kj}, \quad k = 0, 1, \dots, r-1,
+\]
+where \( W_r = e^{-2\pi i / r} \) is the twiddle factor for radix \( r \).
+
+\section{FFT for \( N = R_1 \times R_2 \times R_3 \)}
+When the sequence length \( N \) factors into three components \( N = R_1 \times R_2 \times R_3 \), the FFT computation can be broken down into three stages, each corresponding to one of the factors.
+
+\subsection{Multidimensional Indexing}
+The input sequence \( x[n] \) is represented as a three-dimensional array:
+\[
+x[s_1, s_2, s_3],
+\]
+where:
+\begin{itemize}
+    \item \( s_1 = 0, 1, \dots, R_3 - 1 \),
+    \item \( s_2 = 0, 1, \dots, R_2 - 1 \),
+    \item \( s_3 = 0, 1, \dots, R_1 - 1 \).
+\end{itemize}
+The index \( n \) is expressed as:
+\[
+n = s_1 + R_3 \cdot s_2 + R_3 R_2 \cdot s_3.
+\]
+
+The output sequence \( X[k] \) is also represented as a three-dimensional array:
+\[
+X[r_1, r_2, r_3],
+\]
+where:
+\begin{itemize}
+    \item \( r_1 = 0, 1, \dots, R_1 - 1 \),
+    \item \( r_2 = 0, 1, \dots, R_2 - 1 \),
+    \item \( r_3 = 0, 1, \dots, R_3 - 1 \).
+\end{itemize}
+The index \( k \) is expressed as:
+\[
+k = r_1 + R_1 \cdot r_2 + R_1 R_2 \cdot r_3.
+\]
+
+\subsection{Step-by-Step Computation}
+\subsubsection{Step 1: Summation over \( s_1 \)}
+First, we fix \( s_2 \) and \( s_3 \) and compute the sum over \( s_1 \):
+\[
+X_1[r_1, s_2, s_3] = \sum_{s_1=0}^{R_3-1} x[s_1, s_2, s_3] \cdot W_N^{k \cdot s_1}.
+\]
+Here:
+\[
+k \cdot s_1 = (r_1 + R_1 \cdot r_2 + R_1 R_2 \cdot r_3) \cdot s_1.
+\]
+Thus:
+\[
+X_1[r_1, s_2, s_3] = \sum_{s_1=0}^{R_3-1} x[s_1, s_2, s_3] \cdot W_N^{r_1 s_1} \cdot W_N^{R_1 r_2 s_1} \cdot W_N^{R_1 R_2 r_3 s_1}.
+\]
+
+\subsubsection{Step 2: Summation over \( s_2 \)}
+Next, we fix \( s_3 \) and compute the sum over \( s_2 \), using the result \( X_1[r_1, s_2, s_3] \):
+\[
+X_2[r_1, r_2, s_3] = \sum_{s_2=0}^{R_2-1} X_1[r_1, s_2, s_3] \cdot W_N^{k \cdot R_3 s_2}.
+\]
+Here:
+\[
+k \cdot R_3 s_2 = (r_1 + R_1 \cdot r_2 + R_1 R_2 \cdot r_3) \cdot R_3 s_2.
+\]
+Thus:
+\[
+X_2[r_1, r_2, s_3] = \sum_{s_2=0}^{R_2-1} X_1[r_1, s_2, s_3] \cdot W_N^{r_1 R_3 s_2} \cdot W_N^{R_1 r_2 R_3 s_2} \cdot W_N^{R_1 R_2 r_3 R_3 s_2}.
+\]
+
+\subsubsection{Step 3: Summation over \( s_3 \)}
+Finally, we compute the sum over \( s_3 \), using the result \( X_2[r_1, r_2, s_3] \):
+\[
+X[r_1, r_2, r_3] = \sum_{s_3=0}^{R_1-1} X_2[r_1, r_2, s_3] \cdot W_N^{k \cdot R_3 R_2 s_3}.
+\]
+Here:
+\[
+k \cdot R_3 R_2 s_3 = (r_1 + R_1 \cdot r_2 + R_1 R_2 \cdot r_3) \cdot R_3 R_2 s_3.
+\]
+Thus:
+\[
+X[r_1, r_2, r_3] = \sum_{s_3=0}^{R_1-1} X_2[r_1, r_2, s_3] \cdot W_N^{r_1 R_3 R_2 s_3} \cdot W_N^{R_1 r_2 R_3 R_2 s_3} \cdot W_N^{R_1 R_2 r_3 R_3 R_2 s_3}.
+\]
+
+\section{Relationship Between Intermediate and Final Results}
+The intermediate results \( X_1 \) and \( X_2 \) are related to the final result \( X \) through the following steps:
+1. \( X_1[r_1, s_2, s_3] \) is computed by summing over \( s_1 \).
+2. \( X_2[r_1, r_2, s_3] \) is computed by summing over \( s_2 \), using \( X_1 \).
+3. \( X[r_1, r_2, r_3] \) is computed by summing over \( s_3 \), using \( X_2 \).
+
+To express \( X_1[r_1, s_2, s_3] \) in terms of \( X[r_1, r_2, r_3] \), we use the inverse FFT (IDFT):
+\[
+X_1[r_1, s_2, s_3] = \sum_{r_2=0}^{R_2-1} \left( \sum_{r_3=0}^{R_3-1} X[r_1, r_2, r_3] \cdot W_N^{-k \cdot R_3 R_2 s_3} \right) \cdot W_N^{-k \cdot R_3 s_2}.
+\]
+
+\end{document}
+
